@@ -1,0 +1,77 @@
+plugins {
+    id 'java-library'
+    id 'maven-publish'
+}
+
+group 'ca.jahed.umlrt'
+version '1.0-SNAPSHOT'
+
+repositories {
+    mavenCentral()
+}
+
+dependencies {
+    compile group: 'info.picocli', name: 'picocli', version: '4.5.0'
+    compile group: 'org.javatuples', name: 'javatuples', version: '1.2'
+
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+    testCompile group: 'junit', name: 'junit', version: '4.12'
+}
+
+jar {
+    from { (configurations.runtime).collect { it.isDirectory() ? it : zipTree(it) } } {
+        exclude 'META-INF/*.RSA', 'META-INF/*.SF', 'META-INF/*.DSA'
+    }
+}
+
+publishing {
+    repositories {
+        mavenLocal()
+        maven {
+            name = "GitHubPackages"
+            url = uri("https://maven.pkg.github.com/kjahed/umlrt-composer")
+            credentials {
+                username = project.findProperty("gpr.user") ?: System.getenv("GH_USER")
+                password = project.findProperty("gpr.key") ?: System.getenv("GH_TOKEN")
+            }
+        }
+    }
+
+    publications {
+        mvn(MavenPublication) {
+            from components.java
+            artifactId = rootProject.name
+            versionMapping {
+                usage('java-api') {
+                    fromResolutionOf('runtimeClasspath')
+                }
+                usage('java-runtime') {
+                    fromResolutionResult()
+                }
+            }
+            pom {
+                name = 'UML-RT Composer'
+                description = 'Library to read and write UML-RT models'
+                url = 'https://github.com/kjahed/umlrt-composer'
+                licenses {
+                    license {
+                        name = 'The Apache License, Version 2.0'
+                        url = 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'kjahed'
+                        name = 'Karim Jahed'
+                        email = 'jahed@cs.queensu.ca'
+                    }
+                }
+                scm {
+                    connection = 'scm:git:git://github.com/kjahed/umlrt-composer.git'
+                    developerConnection = 'scm:git:ssh://github.com/kjahed/umlrt-composer.git'
+                    url = 'https://github.com/kjahed/umlrt-composer/'
+                }
+            }
+        }
+    }
+}
